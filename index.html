@@ -486,12 +486,52 @@ $("inventoryList").addEventListener("click", event => {
   persistAll();
 });
 
+
 $("calculateCost").addEventListener("click", () => {
   const ingredient = Number($("batchCost").value);
   const packaging = Number($("packCost").value);
   const other = Number($("otherCost").value);
   const bars = Number($("barCount").value);
 
-  if (![ingredient,packaging,other].every(n => Number.isFinite(n) && n >= 0) ||
-      !Number.isFinite(bars) || bars <= 0) {
-    return alert("E
+  if (
+    ![ingredient, packaging, other].every(
+      n => Number.isFinite(n) && n >= 0
+    ) ||
+    !Number.isFinite(bars) ||
+    bars <= 0
+  ) {
+    return alert(
+      "Enter valid non-negative costs and a bar count greater than zero."
+    );
+  }
+
+  const total = ingredient + packaging + other;
+
+  $("costResult").innerHTML = `
+    <div class="good">
+      <h3>Batch cost summary</h3>
+      <p>Total batch cost: <b>KES ${total.toFixed(2)}</b></p>
+      <p>Number of bars: ${bars}</p>
+      <p>Estimated cost per bar:
+        <b>KES ${(total / bars).toFixed(2)}</b>
+      </p>
+    </div>
+  `;
+});
+
+function renderAll() {
+  renderIngredients();
+  renderRecipes();
+  renderInventory();
+
+  $("recipeCount").textContent = recipes.length;
+  $("ingredientCount").textContent = ingredients.length;
+  $("stockCount").textContent = stock.length;
+}
+
+renderOilInputs();
+renderAll();
+
+</script>
+</body>
+</html>
