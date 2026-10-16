@@ -1,0 +1,497 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#315c49">
+<title>SOAP LAB</title>
+<style>
+:root{--green:#315c49;--light:#eef4ed;--cream:#faf8f1;--ink:#24352c;--line:#dce5db}
+*{box-sizing:border-box}
+body{margin:0;background:var(--cream);color:var(--ink);font:15px Arial,sans-serif}
+header{background:var(--green);color:white;padding:22px 16px}
+header h1{margin:0;font-size:27px;letter-spacing:2px}
+header p{margin:8px 0 0;color:#e0eee2}
+nav{display:flex;gap:7px;padding:10px;overflow-x:auto;background:white;border-bottom:1px solid var(--line)}
+nav button{white-space:nowrap;border:0;border-radius:8px;padding:11px;background:var(--light);color:var(--green);font-weight:bold}
+nav button.active,.primary{background:var(--green)!important;color:white!important}
+main{padding:15px;max-width:900px;margin:auto}
+section{display:none}
+section.active{display:block}
+.card{background:white;border:1px solid var(--line);border-radius:12px;padding:15px;margin-bottom:13px}
+h2{font-size:21px;margin:5px 0 14px}
+h3{font-size:16px;margin:12px 0}
+label{display:block;font-weight:bold;margin:12px 0 5px}
+input,select,textarea{width:100%;padding:11px;border:1px solid #bdcbbb;border-radius:7px;background:white;font-size:16px;color:var(--ink)}
+textarea{min-height:80px}
+button{cursor:pointer}
+.action{border:0;border-radius:7px;padding:11px 14px;margin:8px 5px 0 0;background:var(--light);color:var(--green);font-weight:bold}
+input[type=checkbox]{width:auto}
+table{width:100%;border-collapse:collapse;margin-top:12px}
+th,td{text-align:left;padding:9px 5px;border-bottom:1px solid var(--line);font-size:14px}
+.metric{font-size:24px;font-weight:bold;color:var(--green)}
+.muted{color:#657468;font-size:13px}
+.notice{padding:12px;background:#fff5dc;border-radius:8px;margin:10px 0;line-height:1.5}
+.good{background:var(--light);padding:12px;border-radius:8px;line-height:1.5}
+footer{text-align:center;padding:25px;color:#718073;font-size:12px}
+</style>
+</head>
+<body>
+<header>
+  <h1>SOAP LAB</h1>
+  <p>Your offline soap-making workspace</p>
+</header>
+
+<nav id="navigation">
+  <button class="active" data-tab="home">Home</button>
+  <button data-tab="formula">Formula Lab</button>
+  <button data-tab="ingredients">Ingredients</button>
+  <button data-tab="recipes">Notebook</button>
+  <button data-tab="inventory">Inventory</button>
+  <button data-tab="chemistry">Chemistry</button>
+  <button data-tab="equipment">Equipment</button>
+</nav>
+
+<main>
+<section id="home" class="active">
+  <div class="card">
+    <h2>Welcome to SOAP LAB</h2>
+    <p>Develop recipes, learn soap chemistry, manage materials and record production costs.</p>
+    <div class="good">Your notebook and inventory are stored in this browser on this device.</div>
+  </div>
+  <div class="card">
+    <h3>Workspace summary</h3>
+    <p>Saved recipes</p><div class="metric" id="recipeCount">0</div>
+    <p>Ingredient records</p><div class="metric" id="ingredientCount">0</div>
+    <p>Inventory items</p><div class="metric" id="stockCount">0</div>
+  </div>
+  <div class="card">
+    <h3>Important safety note</h3>
+    <p>Soap making can involve corrosive sodium hydroxide (NaOH) or potassium hydroxide (KOH). Use appropriate eye and skin protection, suitable equipment and a verified formulation. Never mix hydroxide with water by pouring water onto solid hydroxide.</p>
+  </div>
+</section>
+
+<section id="formula">
+  <div class="card">
+    <h2>Formula Lab</h2>
+    <label>Recipe name</label>
+    <input id="formulaName" placeholder="e.g. Everyday Olive Soap">
+    <label>Batch size (grams of oils)</label>
+    <input id="batchSize" type="number" min="1" value="1000">
+    <p class="muted">Enter the percentage of each oil in your formula. Percentages should total 100%.</p>
+    <div id="oilInputs"></div>
+    <button class="action" id="addOil">+ Add oil</button>
+    <button class="action primary" id="calculateFormula">Calculate formula</button>
+    <div id="formulaResult"></div>
+    <div class="notice">This tool calculates oil weights only. It deliberately does not calculate a lye dose. Before making soap, obtain verified SAP values for each specific oil and confirm the hydroxide type, purity and superfat calculation using a trusted soap calculator.</div>
+    <label>Process notes</label>
+    <textarea id="formulaNotes" placeholder="Method, temperatures, observations..."></textarea>
+    <button class="action primary" id="saveFormula">Save recipe to notebook</button>
+  </div>
+</section>
+
+<section id="ingredients">
+  <div class="card">
+    <h2>Ingredient Database</h2>
+    <input id="ingredientSearch" placeholder="Search ingredients..." aria-label="Search ingredients">
+    <div id="ingredientList"></div>
+  </div>
+  <div class="card">
+    <h3>Add an ingredient</h3>
+    <label>Name</label><input id="newIngredientName" placeholder="Ingredient name">
+    <label>Category</label>
+    <select id="newIngredientCategory">
+      <option>Oil or butter</option><option>Filler</option>
+      <option>Additive</option><option>Fragrance</option>
+      <option>Colourant</option><option>Other</option>
+    </select>
+    <label>Description or notes</label><textarea id="newIngredientNotes"></textarea>
+    <button class="action primary" id="addIngredient">Add ingredient</button>
+  </div>
+</section>
+
+<section id="recipes">
+  <div class="card">
+    <h2>Recipe Notebook</h2>
+    <p class="muted">Saved recipes remain on this device in this browser.</p>
+    <div id="recipeList"></div>
+    <button class="action" id="exportRecipes">Export backup JSON</button>
+    <label>Import recipe backup</label>
+    <input type="file" id="importFile" accept=".json,application/json">
+    <button class="action" id="importRecipes">Import backup</button>
+  </div>
+</section>
+
+<section id="inventory">
+  <div class="card">
+    <h2>Inventory and Costing</h2>
+    <label>Material</label><input id="stockName" placeholder="e.g. Coconut oil">
+    <label>Quantity available (grams)</label><input id="stockQty" type="number" min="0" step="any">
+    <label>Total purchase cost (KES)</label><input id="stockCost" type="number" min="0" step="any">
+    <button class="action primary" id="addStock">Save inventory item</button>
+    <div id="inventoryList"></div>
+  </div>
+  <div class="card">
+    <h3>Quick batch cost estimator</h3>
+    <label>Ingredient cost (KES)</label><input id="batchCost" type="number" min="0" value="0">
+    <label>Packaging cost (KES)</label><input id="packCost" type="number" min="0" value="0">
+    <label>Other costs (KES)</label><input id="otherCost" type="number" min="0" value="0">
+    <label>Number of bars produced</label><input id="barCount" type="number" min="1" value="10">
+    <button class="action primary" id="calculateCost">Calculate costs</button>
+    <div id="costResult"></div>
+  </div>
+</section>
+
+<section id="chemistry">
+  <div class="card">
+    <h2>Soap Chemistry Reference</h2>
+    <details open>
+      <summary><b>Saponification</b></summary>
+      <p>Saponification is the reaction of fats or oils with an alkali, producing soap and glycerol. The amount of alkali depends on the oils, their SAP values, hydroxide type and formulation.</p>
+    </details>
+    <details>
+      <summary><b>Oils and fatty acids</b></summary>
+      <p>Oils contain triglycerides with different fatty-acid profiles. Lauric and myristic acids tend to contribute cleansing and lather; oleic acid contributes conditioning characteristics; stearic and palmitic acids contribute hardness and stable lather.</p>
+    </details>
+    <details>
+      <summary><b>Superfat</b></summary>
+      <p>Superfat is a formulation allowance that reduces the calculated alkali relative to the amount needed for full saponification. It is not a substitute for accurate measurements or verified SAP data.</p>
+    </details>
+    <details>
+      <summary><b>pH and curing</b></summary>
+      <p>Soap is naturally alkaline. Curing allows water to evaporate and the bar to become harder. A pH reading alone cannot establish that a soap is safe or free of excess alkali.</p>
+    </details>
+    <details>
+      <summary><b>NaOH versus KOH</b></summary>
+      <p>Sodium hydroxide is commonly used for solid bar soap; potassium hydroxide is commonly used for liquid soap. Their SAP values and quantities are not interchangeable.</p>
+    </details>
+  </div>
+</section>
+
+<section id="equipment">
+  <div class="card">
+    <h2>Equipment Guide</h2>
+    <h3>Measuring</h3><p>Use a reliable digital scale suitable for the quantities being weighed.</p>
+    <h3>Mixing</h3><p>Use compatible containers and utensils. Avoid aluminium with caustic hydroxide solutions.</p>
+    <h3>Personal protection</h3><p>Use chemical-resistant gloves, splash goggles, protective clothing and good ventilation.</p>
+    <h3>Moulds</h3><p>Choose moulds that are compatible with soap-making temperatures and the intended recipe.</p>
+    <h3>Storage</h3><p>Keep hydroxides in their original labelled containers, tightly closed, dry and inaccessible to children.</p>
+    <h3>Cleaning and testing</h3><p>Use suitable cleaning procedures and verified quality-control methods. Do not handle uncured soap without appropriate protection.</p>
+  </div>
+</section>
+</main>
+<footer>SOAP LAB · Offline-first starter · Keep your own backups</footer>
+
+<script>
+"use strict";
+
+const $ = id => document.getElementById(id);
+
+function readStore(key, fallback) {
+  try {
+    const value = localStorage.getItem("soaplab_" + key);
+    return value ? JSON.parse(value) : fallback;
+  } catch (error) {
+    return fallback;
+  }
+}
+
+function writeStore(key, value) {
+  try {
+    localStorage.setItem("soaplab_" + key, JSON.stringify(value));
+    return true;
+  } catch (error) {
+    alert("Could not save data. Export a backup and check browser storage.");
+    return false;
+  }
+}
+
+let recipes = readStore("recipes", []);
+let ingredients = readStore("ingredients", [
+  {name:"Olive oil",category:"Oil or butter",notes:"Rich in oleic acid."},
+  {name:"Coconut oil",category:"Oil or butter",notes:"Often contributes cleansing and lather."},
+  {name:"Shea butter",category:"Oil or butter",notes:"Contains substantial stearic and oleic acids."},
+  {name:"Castor oil",category:"Oil or butter",notes:"Often used in small proportions to support lather."},
+  {name:"Sodium lactate",category:"Additive",notes:"May help hardness in suitable formulations."},
+  {name:"Kaolin clay",category:"Filler",notes:"Assess suitability and use appropriate quantities."}
+]);
+let stock = readStore("inventory", []);
+let currentOils = [
+  {name:"Olive oil",pct:60},
+  {name:"Coconut oil",pct:30},
+  {name:"Shea butter",pct:10}
+];
+
+function persistAll() {
+  writeStore("recipes", recipes);
+  writeStore("ingredients", ingredients);
+  writeStore("inventory", stock);
+  renderAll();
+}
+
+function safe(value) {
+  return String(value ?? "").replace(/[&<>"']/g, c => ({
+    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+  })[c]);
+}
+
+$("navigation").addEventListener("click", event => {
+  const button = event.target.closest("button[data-tab]");
+  if (!button) return;
+  document.querySelectorAll("nav button").forEach(b =>
+    b.classList.toggle("active", b === button)
+  );
+  document.querySelectorAll("main section").forEach(section =>
+    section.classList.toggle("active", section.id === button.dataset.tab)
+  );
+});
+
+function renderOilInputs() {
+  $("oilInputs").innerHTML = currentOils.map((oil, i) => `
+    <div class="card">
+      <label>Oil ${i+1}</label>
+      <input data-oil-name="${i}" value="${safe(oil.name)}" placeholder="Oil name">
+      <label>Percentage (%)</label>
+      <input data-oil-pct="${i}" type="number" min="0" max="100" step="any" value="${oil.pct}">
+      ${currentOils.length > 1 ? `<button class="action" data-remove-oil="${i}">Remove oil</button>` : ""}
+    </div>
+  `).join("");
+}
+
+$("oilInputs").addEventListener("input", event => {
+  const nameIndex = event.target.dataset.oilName;
+  const pctIndex = event.target.dataset.oilPct;
+  if (nameIndex !== undefined) currentOils[Number(nameIndex)].name = event.target.value;
+  if (pctIndex !== undefined) currentOils[Number(pctIndex)].pct = Number(event.target.value);
+});
+
+$("oilInputs").addEventListener("click", event => {
+  const index = event.target.dataset.removeOil;
+  if (index === undefined) return;
+  currentOils.splice(Number(index), 1);
+  renderOilInputs();
+});
+
+$("addOil").addEventListener("click", () => {
+  currentOils.push({name:"",pct:0});
+  renderOilInputs();
+});
+
+let lastFormula = null;
+
+$("calculateFormula").addEventListener("click", () => {
+  const batch = Number($("batchSize").value);
+  const totalPct = currentOils.reduce((sum, oil) => sum + Number(oil.pct), 0);
+
+  if (!Number.isFinite(batch) || batch <= 0) {
+    alert("Enter a batch size greater than zero.");
+    return;
+  }
+  if (currentOils.some(oil => !oil.name.trim() || !Number.isFinite(Number(oil.pct)) || Number(oil.pct) < 0)) {
+    alert("Give every oil a name and a valid percentage.");
+    return;
+  }
+  if (Math.abs(totalPct - 100) > 0.01) {
+    alert("Oil percentages must total 100%. Current total: " + totalPct + "%");
+    return;
+  }
+
+  lastFormula = {
+    name:$("formulaName").value.trim() || "Untitled recipe",
+    batch,
+    oils:currentOils.map(oil => ({
+      name:oil.name.trim(),
+      pct:Number(oil.pct),
+      grams:batch * Number(oil.pct) / 100
+    })),
+    notes:$("formulaNotes").value,
+    created:new Date().toISOString()
+  };
+
+  $("formulaResult").innerHTML = `
+    <h3>Oil weights</h3>
+    <table><thead><tr><th>Oil</th><th>%</th><th>Grams</th></tr></thead>
+    <tbody>${lastFormula.oils.map(o => `
+      <tr><td>${safe(o.name)}</td><td>${o.pct.toFixed(2)}%</td><td>${o.grams.toFixed(2)} g</td></tr>
+    `).join("")}</tbody>
+    <tfoot><tr><th>Total</th><th>100%</th><th>${batch.toFixed(2)} g</th></tr></tfoot>
+    </table>
+  `;
+});
+
+$("saveFormula").addEventListener("click", () => {
+  if (!lastFormula) {
+    alert("Calculate the formula first.");
+    return;
+  }
+  lastFormula.notes = $("formulaNotes").value;
+  lastFormula.name = $("formulaName").value.trim() || "Untitled recipe";
+  recipes.unshift({...lastFormula, id:Date.now()});
+  if (writeStore("recipes", recipes)) {
+    renderAll();
+    alert("Recipe saved.");
+  }
+});
+
+function renderIngredients() {
+  const query = $("ingredientSearch").value.toLowerCase();
+  const filtered = ingredients.filter(i =>
+    (i.name + " " + i.category + " " + i.notes).toLowerCase().includes(query)
+  );
+  $("ingredientList").innerHTML = filtered.length ? filtered.map(item => `
+    <div class="card">
+      <b>${safe(item.name)}</b>
+      <p class="muted">${safe(item.category)}</p>
+      <p>${safe(item.notes)}</p>
+      <button class="action" data-delete-ingredient="${ingredients.indexOf(item)}">Delete</button>
+    </div>
+  `).join("") : "<p>No matching ingredients.</p>";
+}
+
+$("ingredientSearch").addEventListener("input", renderIngredients);
+
+$("addIngredient").addEventListener("click", () => {
+  const name = $("newIngredientName").value.trim();
+  if (!name) return alert("Enter an ingredient name.");
+  ingredients.push({
+    name,
+    category:$("newIngredientCategory").value,
+    notes:$("newIngredientNotes").value.trim()
+  });
+  $("newIngredientName").value = "";
+  $("newIngredientNotes").value = "";
+  persistAll();
+});
+
+$("ingredientList").addEventListener("click", event => {
+  const index = event.target.dataset.deleteIngredient;
+  if (index === undefined) return;
+  if (!confirm("Delete this ingredient record?")) return;
+  ingredients.splice(Number(index), 1);
+  persistAll();
+});
+
+function renderRecipes() {
+  $("recipeList").innerHTML = recipes.length ? recipes.map((recipe, index) => `
+    <div class="card">
+      <h3>${safe(recipe.name)}</h3>
+      <p>Oil batch: ${Number(recipe.batch).toLocaleString()} g</p>
+      <table><tbody>${(recipe.oils || []).map(o => `
+        <tr><td>${safe(o.name)}</td><td>${Number(o.pct).toFixed(2)}%</td><td>${Number(o.grams).toFixed(2)} g</td></tr>
+      `).join("")}</tbody></table>
+      <p>${safe(recipe.notes || "")}</p>
+      <button class="action primary" data-open-recipe="${index}">Open in Formula Lab</button>
+      <button class="action" data-delete-recipe="${index}">Delete</button>
+    </div>
+  `).join("") : "<p>No saved recipes yet.</p>";
+}
+
+$("recipeList").addEventListener("click", event => {
+  const openIndex = event.target.dataset.openRecipe;
+  const deleteIndex = event.target.dataset.deleteRecipe;
+
+  if (openIndex !== undefined) {
+    const r = recipes[Number(openIndex)];
+    if (!r) return;
+    $("formulaName").value = r.name || "";
+    $("batchSize").value = r.batch || 1000;
+    $("formulaNotes").value = r.notes || "";
+    currentOils = (r.oils || []).map(o => ({name:o.name,pct:Number(o.pct)}));
+    renderOilInputs();
+    lastFormula = null;
+    $("formulaResult").innerHTML = "";
+    document.querySelector('nav button[data-tab="formula"]').click();
+  }
+
+  if (deleteIndex !== undefined) {
+    if (!confirm("Delete this recipe?")) return;
+    recipes.splice(Number(deleteIndex), 1);
+    persistAll();
+  }
+});
+
+$("exportRecipes").addEventListener("click", () => {
+  const backup = {
+    app:"SOAP LAB",
+    version:1,
+    exported:new Date().toISOString(),
+    recipes,
+    ingredients,
+    inventory:stock
+  };
+  const blob = new Blob([JSON.stringify(backup,null,2)], {type:"application/json"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "soap-lab-backup.json";
+  a.click();
+  URL.revokeObjectURL(url);
+});
+
+$("importRecipes").addEventListener("click", async () => {
+  const file = $("importFile").files[0];
+  if (!file) return alert("Choose a backup JSON file first.");
+
+  try {
+    const data = JSON.parse(await file.text());
+    if (!data || !Array.isArray(data.recipes)) {
+      throw new Error("Invalid backup format.");
+    }
+    if (!confirm("Import backup? Existing records with matching IDs may be duplicated.")) return;
+    recipes = [...data.recipes, ...recipes];
+    if (Array.isArray(data.ingredients)) ingredients = [...ingredients, ...data.ingredients];
+    if (Array.isArray(data.inventory)) stock = [...stock, ...data.inventory];
+    persistAll();
+    alert("Backup imported.");
+  } catch (error) {
+    alert("Could not import backup: " + error.message);
+  }
+});
+
+$("addStock").addEventListener("click", () => {
+  const name = $("stockName").value.trim();
+  const qty = Number($("stockQty").value);
+  const cost = Number($("stockCost").value);
+
+  if (!name || !Number.isFinite(qty) || qty < 0 ||
+      !Number.isFinite(cost) || cost < 0) {
+    return alert("Enter a name and valid non-negative quantity and cost.");
+  }
+
+  stock.push({name,qty,cost,id:Date.now()});
+  $("stockName").value = "";
+  $("stockQty").value = "";
+  $("stockCost").value = "";
+  persistAll();
+});
+
+function renderInventory() {
+  $("inventoryList").innerHTML = stock.length ? stock.map((item,index) => `
+    <div class="card">
+      <b>${safe(item.name)}</b>
+      <p>Available: ${item.qty} g</p>
+      <p>Purchase cost: KES ${item.cost.toFixed(2)}</p>
+      <p>Estimated cost per gram: ${item.qty > 0 ? "KES " + (item.cost/item.qty).toFixed(4) : "Unavailable (zero stock)"}</p>
+      <button class="action" data-delete-stock="${index}">Delete</button>
+    </div>
+  `).join("") : "<p>No inventory items yet.</p>";
+}
+
+$("inventoryList").addEventListener("click", event => {
+  const index = event.target.dataset.deleteStock;
+  if (index === undefined) return;
+  if (!confirm("Delete this inventory record?")) return;
+  stock.splice(Number(index), 1);
+  persistAll();
+});
+
+$("calculateCost").addEventListener("click", () => {
+  const ingredient = Number($("batchCost").value);
+  const packaging = Number($("packCost").value);
+  const other = Number($("otherCost").value);
+  const bars = Number($("barCount").value);
+
+  if (![ingredient,packaging,other].every(n => Number.isFinite(n) && n >= 0) ||
+      !Number.isFinite(bars) || bars <= 0) {
+    return alert("E
